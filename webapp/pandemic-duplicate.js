@@ -367,6 +367,10 @@ function show_current_game(xtra)
 		var $pg = show_page('resource_planning_page');
 		init_resource_planning_page($pg);
 	}
+	else if (G.step == 'infection_rumor') {
+		var $pg = show_page('infection_rumor_page');
+		init_infection_rumor_page($pg);
+	}
 	else if (G.step == 'end') {
 		var $pg = show_page('game_completed_page');
 		init_game_completed_page($pg);
@@ -1763,6 +1767,9 @@ function do_move(m)
 	else if (mm[0] == 'resource_planning') {
 		do_resource_planning(m.substring(18));
 	}
+    else if (mm[0] == 'infection_rumor') {
+        do_infection_rumor(m.substring(16));
+    }
 	else if (m == 'give_up') {
 		G.step = 'end';
 		G.result = 'loss'
@@ -1872,6 +1879,21 @@ function do_resource_planning(s)
 	delete G.after_resource_planning_step;
 }
 
+function do_infection_rumor(s)
+{
+    find_and_remove_card(G.infection_deck, s);
+    G.infection_discards.push(G.infection_deck, s);
+    G.infection_rumor = true;
+    G.history.push({
+        'type':'infection_rumor',
+        'city':s
+        });
+
+	G.time++;
+	G.step = G.after_infection_rumor_step;
+	delete G.after_infection_rumor_step;
+}
+
 function do_special_event(c)
 {
 	var hfun = function(cc) {
@@ -1935,17 +1957,15 @@ function do_special_event(c)
 				});
 		}
 	}
-	else if (m = /^"Infection Rumor" "(.*)"$/.exec(c)) {
-		if (hfun("Infection Rumor")) {
-			find_and_remove_card(G.infection_deck, m[1]);
-			G.infection_discards.push(G.infection_deck, m[1]);
-			G.infection_rumor = true;
-			G.history.push({
-				'type':'infection_rumor',
-				'city':m[1]
-				});
+    else if (c == 'Infection Rumor') {
+		if (hfun(c)) {
+			if (G.step == 'epidemic') {
+				finish_epidemic();
+			}
+			G.after_infection_rumor_step = G.step;
+			G.step = 'infection_rumor';
 		}
-	}
+    }
 	else if (m = /^"New Assignment" "([^"]*)" "([^"]*)"$/.exec(c)) {
 		if (hfun("New Assignment")) {
 			for (var i = 1; i <= G.rules.player_count; i++) {
@@ -2788,7 +2808,7 @@ function init_infection_rumor_page($pg)
 function on_infection_rumor_selected()
 {
 	var c = this.getAttribute('data-city-name');
-	return set_move('special "Infection Rumor" "' + c + '"');
+	return set_move('infection_rumor ' + c);
 }
 
 function on_special_event_clicked()
@@ -2796,14 +2816,8 @@ function on_special_event_clicked()
 	var s =  this.getAttribute('data-special-event');
 
 	if (s == 'Resilient Population') {
-
 		var $pg = show_page('resilient_population_page');
 		init_resilient_population_page($pg);
-		return;
-	}
-	if (s == 'Infection Rumor') {
-		var $pg = show_page('infection_rumor_page');
-		init_infection_rumor_page($pg);
 		return;
 	}
 	else if (s == 'New Assignment') {
