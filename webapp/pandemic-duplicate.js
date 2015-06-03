@@ -2216,7 +2216,7 @@ function set_continue_btn_caption($pg)
 	else if (G.pending_infection > 0) {
 		$('.goto_infection_btn', $pg).show();
 	}
-	else if ((G.step == 'draw_cards' || G.step == 'epidemic' || G.step == 'mutation') && !G.one_quiet_night) {
+	else if ((G.step == 'draw_cards' || G.step == 'epidemic' || G.step == 'epidemic_finished' || G.step == 'mutation') && !G.one_quiet_night) {
 		if (G.rules.hinterlands_challenge) {
 			$('.goto_hinterlands_btn', $pg).show();
 		}
