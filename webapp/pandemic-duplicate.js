@@ -22,6 +22,10 @@ function load_options()
 		Pandemic.Cities['Toronto'].name = 'Montr\u00e9al';
 	}
 
+	CFG.has_on_the_brink = localStorage.getItem(PACKAGE+'.has_on_the_brink')=='true';
+	CFG.has_in_the_lab = localStorage.getItem(PACKAGE+'.has_in_the_lab')=='true';
+	CFG.has_state_of_emergency = localStorage.getItem(PACKAGE+'.has_state_of_emergency')=='true';
+
 	CFG.game_detail_level = +localStorage.getItem(PACKAGE+'.game_detail_level');
 	if (CFG.game_detail_level >= 1) {
 		$('.detail_level_1').show();
@@ -128,6 +132,7 @@ function init_options_page($pg)
 
 	f.has_on_the_brink.checked = localStorage.getItem(PACKAGE+'.has_on_the_brink')=='true';
 	f.has_in_the_lab.checked = localStorage.getItem(PACKAGE+'.has_in_the_lab')=='true';
+	f.has_state_of_emergency.checked = localStorage.getItem(PACKAGE+'.has_state_of_emergency')=='true';
 
 	var tmp1 = localStorage.getItem(PACKAGE+'.game_detail_level');
 	f.game_detail_level.value = tmp1 || '0';
@@ -139,6 +144,7 @@ function save_options_form()
 	localStorage.setItem(PACKAGE+'.base_game_version', f.base_game_version.value);
 	localStorage.setItem(PACKAGE+'.has_on_the_brink', f.has_on_the_brink.checked ? 'true' : 'false');
 	localStorage.setItem(PACKAGE+'.has_in_the_lab', f.has_in_the_lab.checked ? 'true' : 'false');
+	localStorage.setItem(PACKAGE+'.has_state_of_emergency', f.has_state_of_emergency.checked ? 'true' : 'false');
 	localStorage.setItem(PACKAGE+'.game_detail_level', f.game_detail_level.value);
 	load_options();
 }
@@ -148,6 +154,7 @@ $(function() {
 	f.base_game_version.onchange = save_options_form;
 	f.has_on_the_brink.onchange = save_options_form;
 	f.has_in_the_lab.onchange = save_options_form;
+	f.has_state_of_emergency.onchange = save_options_form;
 	f.game_detail_level.onchange = save_options_form;
 });
 function init_subscription_page($pg)
@@ -3366,6 +3373,14 @@ function validate_modules()
 	}
 }
 
+function scenario_compatible(R)
+{
+	if (R.expansion=='on_the_brink' && !CFG.has_on_the_brink) {
+		return false;
+	}
+	return true;
+}
+
 function init_pick_scenario_page($pg, xtra)
 {
 	var pcount = 2;
@@ -3378,7 +3393,14 @@ function init_pick_scenario_page($pg, xtra)
 
 	$('.scenario_row:not(.template)', $pg).remove();
 	var a = stor_get_list(PACKAGE + '.scenarios_by_player_count.' + pcount);
+	var not_shown = 0;
 	for (var i = 0; i < a.length; i++) {
+
+		G = load_scenario(a[i]);
+		if (!scenario_compatible(G.rules)) {
+			not_shown++;
+			continue;
+		}
 
 		var $tr = $('.scenario_row.template').clone();
 		$tr.removeClass('template');
@@ -3388,7 +3410,6 @@ function init_pick_scenario_page($pg, xtra)
 		$('button',$tr).click(on_preshuffled_game_clicked);
 
 		var $g = $tr;
-		G = load_scenario(a[i]);
 		$('.module_list_container',$tr).append(make_modules_label(G.rules));
 		$('.epidemic_count', $g).text(G.rules.level);
 
@@ -3423,6 +3444,14 @@ function init_pick_scenario_page($pg, xtra)
 		$('.deal_status_col', $tr).text(description);
 
 		$('.scenarios_list', $pg).append($tr);
+	}
+
+	if (not_shown != 0) {
+		$('.not_shown_count', $pg).text(not_shown + (not_shown != 1 ? ' scenarios' : ' scenario'));
+		$('.not_shown_list', $pg).show();
+	}
+	else {
+		$('.not_shown_list', $pg).hide();
 	}
 }
 

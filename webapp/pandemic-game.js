@@ -92,7 +92,9 @@ var Expansions = [
 	'state_of_emergency'
 ];
 
-var Modules = [
+// the order of modules in this list determines the order they should
+// be encoded in a Rules string.
+var Module_Names = [
 	'virulent_strain',
 	'lab_challenge',
 	'mutation_challenge',
@@ -288,10 +290,10 @@ function shuffle_array(A)
 
 function stringify_rules(R)
 {
-	var ret = R.expansion + '-' + R.player_count + 'p-' + R.level + 'x';
-	for (var i = 0; i < Modules.length; i++) {
-		if (R[Modules[i]]) {
-			ret = ret + '-' + Modules[i];
+	var ret = R.player_count + 'p-' + R.level + 'x-' + R.expansion;
+	for (var i = 0; i < Module_Names.length; i++) {
+		if (R[Module_Names[i]]) {
+			ret = ret + '-' + Module_Names[i];
 		}
 	}
 	return ret;
@@ -299,18 +301,27 @@ function stringify_rules(R)
 
 function parse_rules(s)
 {
-	var ss = s.split(/-/);
-	var ret = {
-		'expansion': ss[0],
-		'player_count': +ss[1].substring(0, ss[1].length-1),
-		'level': +ss[2].substring(0, ss[2].length-1)
-	};
+	var R = {};
 
-	for (var i = 0; i < Modules.length; i++) {
-		ret[Modules[i]] = false;
+	var ss = s.split(/-/);
+	if (ss[0].match(/^(\d+)p/)) {
+		// new-style rules string (player-count first)
+		ret.player_count = +ss[0].substring(0, ss[0].length-1);
+		ret.level = +ss[1].substring(0, ss[1].length-1);
+		ret.expansion = ss[2];
+	}
+	else {
+		// old-style rules string (expansion first)
+		ret.expansion = ss[0];
+		ret.player_count = +ss[1].substring(0, ss[1].length-1);
+		ret.level = +ss[2].substring(0, ss[2].length-1);
+	}
+
+	for (var i = 0; i < Module_Names.length; i++) {
+		ret[Module_Names[i]] = false;
 		for (var j = 3; j < ss.length; j++) {
-			if (ss[j] == Modules[i]) {
-				ret[Modules[i]] = true;
+			if (ss[j] == Module_Names[i]) {
+				ret[Module_Names[i]] = true;
 				break;
 			}
 		}
