@@ -355,6 +355,10 @@ function show_current_game(xtra)
 		var $pg = show_page('player_turn_page');
 		init_epidemic_page($pg);
 	}
+	else if (G.step == 'epidemic_finished') {
+		var $pg = show_page('player_turn_page');
+		init_epidemic_page($pg);
+	}
 	else if (G.step == 'infection') {
 		var $pg = show_page('player_turn_page');
 		init_infection_page($pg);
@@ -1255,6 +1259,7 @@ function finish_epidemic()
 			G.infection_deck.push(c);
 		}
 	}
+    G.step = 'epidemic_finished';
 }
 
 function find_and_remove_card(pile, card_name)
@@ -1731,6 +1736,15 @@ function do_move(m)
 		else if (G.step == 'epidemic') {
 
 			finish_epidemic();
+			if (G.pending_epidemics > 0) {
+				start_epidemic();
+			}
+			else {
+				start_infection();
+			}
+		}
+		else if (G.step == 'epidemic_finished') {
+
 			if (G.pending_epidemics > 0) {
 				start_epidemic();
 			}
