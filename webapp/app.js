@@ -1215,7 +1215,7 @@ app.controller('InfectionRumorPageController',
       }
     }
     this.select = function(card) {
-      GameService.set_move('special "Infection Rumor" "' + card + '"');
+      GameService.set_move('infection_rumor ' + card);
     };
   });
 

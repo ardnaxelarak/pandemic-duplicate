@@ -532,6 +532,20 @@ Pandemic.GameState.prototype.do_forecast = function(s) {
 	delete this.after_forecast_step;
 };
 
+Pandemic.GameState.prototype.do_infection_rumor = function(s) {
+	find_and_remove_card(this.infection_deck, s);
+	this.infection_discards.push(this.infection_deck, s);
+	this.infection_rumor = true;
+	this.history.push({
+		'type':'infection_rumor',
+		'city':s
+		});
+
+	this.time++;
+	this.step = this.after_infection_rumor_step;
+	delete this.after_infection_rumor_step;
+};
+
 Pandemic.GameState.prototype.do_hinterlands_infection = function() {
 	var c = this.hinterlands_rolls.pop();
 	if (c == 'blank') {
@@ -722,6 +736,9 @@ Pandemic.GameState.prototype.do_move = function(m) {
 	else if (mm[0] == 'forecast') {
 		this.do_forecast(m.substring(9));
 	}
+	else if (mm[0] == 'infection_rumor') {
+		this.do_infection_rumor(m.substring(16));
+	}
 	else if (mm[0] == 'resource_planning') {
 		this.do_resource_planning(m.substring(18));
 	}
@@ -887,15 +904,13 @@ Pandemic.GameState.prototype.do_special_event = function(c) {
 				});
 		}
 	}
-	else if (m = /^"Infection Rumor" "(.*)"$/.exec(c)) {
+	else if (c == 'Infection Rumor')) {
 		if (hfun("Infection Rumor")) {
-			find_and_remove_card(this.infection_deck, m[1]);
-			this.infection_discards.push(this.infection_deck, m[1]);
-			this.infection_rumor = true;
-			this.history.push({
-				'type':'infection_rumor',
-				'city':m[1]
-				});
+			if (this.step == 'epidemic') {
+				this.finish_epidemic();
+			}
+			this.after_infection_rumor_step = this.step;
+			this.step = 'infection_rumor';
 		}
 	}
 	else if (m = /^"New Assignment" "([^"]*)" "([^"]*)"$/.exec(c)) {
